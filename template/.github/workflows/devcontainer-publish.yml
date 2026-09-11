@@ -1,0 +1,58 @@
+name: Publish devcontainer image
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/devcontainer-publish.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    # This file ships to every candidate with the template. Without the guard
+    # it would try to push to our registry from their repository on their first
+    # push, fail on permissions, and mail them a failed workflow run.
+    if: github.repository == 'Particle41/monolith-enterprise-application'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Both architectures: grading runs on amd64, and a candidate on Apple
+      # Silicon otherwise pulls an emulated image for the whole exercise.
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .devcontainer
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/particle41/snowman-devcontainer:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Record the pinned reference
+        run: |
+          echo "### Devcontainer image published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "ghcr.io/particle41/snowman-devcontainer@${{ steps.push.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Copy the reference above into devcontainer.json's \`image\` field," >> "$GITHUB_STEP_SUMMARY"
+          echo "replacing the \`build\` block, and into the pinned image the" >> "$GITHUB_STEP_SUMMARY"
+          echo "submission is checked with. Both have to be the same digest." >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,37 @@
+{
+  "name": "snowman",
+  // Build locally by default so the environment works with zero setup on any
+  // devcontainer host (Codespaces, VS Code Dev Containers, Gitpod, DevPod,
+  // Coder). Once fork/.github/workflows/devcontainer-publish.yml has pushed
+  // an image, replace "build" below with:
+  //   "image": "ghcr.io/particle41/snowman-devcontainer@sha256:<digest>"
+  // so first boot becomes a pull, not a build, and the grader can run the
+  // identical digest. See .devcontainer/README.md.
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    // Pinned below v27: the v27 IPv6 default change breaks `kind create
+    // cluster` inside docker-in-docker on Codespaces specifically. See
+    // .devcontainer/README.md "kind caveats" before bumping this.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "26.1",
+      "moby": true
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  },
+  "forwardPorts": [8080, 3306, 61616, 8161],
+  "portsAttributes": {
+    "8080": { "label": "app", "onAutoForward": "notify" },
+    "3306": { "label": "mysql", "onAutoForward": "silent" },
+    "61616": { "label": "activemq-openwire", "onAutoForward": "silent" },
+    "8161": { "label": "activemq-console", "onAutoForward": "silent" }
+  },
+  // Proves the two halves of the environment on first boot: the toolchain the
+  // work needs, and the daemon the feature above supplies.
+  "postCreateCommand": "mvn -v && docker version && kind version && gitleaks version",
+  "remoteUser": "vscode"
+}
