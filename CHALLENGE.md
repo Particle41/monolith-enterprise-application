@@ -94,8 +94,7 @@ Your submitted repository must contain at minimum:
 ## AI use
 
 AI use is expected. Work may be done anywhere, with any tooling, on any
-machine. Coderbyte is only where you accept the terms and where you submit;
-there is no work to do inside it and no environment there to use.
+machine.
 
 ## Fixtures
 

@@ -2,7 +2,7 @@ name: Publish devcontainer image
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - ".devcontainer/**"
       - ".github/workflows/devcontainer-publish.yml"
